@@ -94,4 +94,4 @@ if __name__ == "__main__":
     trades = filter_trade_posts(parsed)
     # print("筛选到的交易类帖子（含进场/离场）:")
     for t in trades:
-        print(t)
+        print(t) 
