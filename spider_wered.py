@@ -63,6 +63,6 @@ def filter_trade_posts(parsed):
 if __name__ == "__main__":
     parsed = get_page()
     trades = filter_trade_posts(parsed)
-    print("筛选到的交易类帖子（含进场/离场）:")
+    # print("筛选到的交易类帖子（含进场/离场）:")
     for t in trades:
         print(t)
