@@ -14,7 +14,19 @@ headers = {
     "referer": "https://www.red-ring.cn/",
     "accept": "application/json, text/plain, */*"
 }
+
+# 数字 -> ETF 代码映射
+MAPPING = {
+    "500": "510500.SS",
+    "300": "510300.SS",
+    "50":  "510050.SS",
+    "1000": "512100.SS"
+}
+
 def get_page(gid=25427, page=1, pageSize=100):
+    """
+    从外部接口获取原始帖子数据
+    """
     url = "https://api.redringvip.com/api/content/list/get"
     params = {
         "gid": gid,
@@ -24,39 +36,56 @@ def get_page(gid=25427, page=1, pageSize=100):
         "pageSize": pageSize
     }
 
-    resp = requests.get(url, headers=headers, params=params)
+    resp = requests.get(url, headers=headers, params=params, timeout=5)
     resp.encoding = "utf-8"
     raw = resp.json()
-    # 第 2 次 JSON 解码
+    # 第二层 JSON 解码
     return json.loads(raw["data"])
+
+
 def filter_trade_posts(parsed):
-    mapping = {
-        "500": "510500.SS",
-        "300": "510300.SS",
-        "50": "510050.SS",
-        "1000": "512100.SS"
-    }
+    """
+    从原始帖子中过滤出交易类信号，返回结构:
+    [
+        {
+            "date": "2025-01-01 09:36:00",
+            "action": "B" / "S",
+            "stock": "510500.SS",
+            "sort": [... 或 None]
+        },
+        ...
+    ]
+    """
     result = []
-    for item in parsed["list"]:
+    pattern = r"([^,]+),\s*(\d+)(?:,\s*强度:\s*(\[.*\]))?"
+
+    for item in parsed.get("list", []):
         content = item.get("content", "")
         ts_f = datetime.fromtimestamp(int(item["time"])).strftime('%Y-%m-%d %H:%M:%S')
-        pattern = r"([^,]+),\s*(\d+)(?:,\s*强度:\s*(\[.*\]))?"
-        match = re.match(pattern, content)
-        if match:
-            action = match.group(1)
-            number = match.group(2)
-            arr = ast.literal_eval(match.group(3)) if match.group(3) else None
 
-            # B/S 映射
-            bs = "B" if action == "进场" else "S"
-            result.append({
-                # "ts": item["time"],
-                "date":ts_f,
-                # "raw_data": content,
-                "action": bs,   # 进场 or 离场
-                "stock": mapping[number],        # 具体数值，如 "500"
-                "sort":arr
-            })
+        match = re.match(pattern, content)
+        if not match:
+            continue
+
+        action_text = match.group(1)   # “进场” / “离场”
+        number = match.group(2)        # "500" / "300" / ...
+        arr = ast.literal_eval(match.group(3)) if match.group(3) else None
+
+        # B/S 映射
+        bs = "B" if action_text == "进场" else "S"
+
+        # 映射到具体 ETF 代码
+        stock = MAPPING.get(number)
+        if not stock:
+            continue
+
+        result.append({
+            "date": ts_f,
+            "action": bs,
+            "stock": stock,
+            "sort": arr,
+        })
+
     return result
 
 
