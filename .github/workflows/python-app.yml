@@ -34,8 +34,8 @@ jobs:
       run: python spider_wered.py
    
     - name: Send message to Feishu
-    run: |
-      curl -X POST \
-        -H "Content-Type: application/json" \
-        -d "{\"msg_type\":\"text\",\"content\":{\"text\":\"ETF Trend 执行完成！\"}}" \
-        ${{ secrets.FEISHU_ROBOT_WEBHOOK }}
+      run: |
+        curl -X POST \
+          -H "Content-Type: application/json" \
+          -d "{\"msg_type\":\"text\",\"content\":{\"text\":\"ETF Trend 执行完成！\"}}" \
+          ${{ secrets.FEISHU_ROBOT_WEBHOOK }}
