@@ -33,8 +33,13 @@ jobs:
     - name: Run spider_wered
       env:
           WE_RED_TOKEN: ${{ secrets.WE_RED_TOKEN }}
-      run: python spider_wered.py
+      run: python spider_wered.py > signal.json
    
+    - name: Upload signal.json
+      uses: actions/upload-artifact@v4
+      with:
+        name: signal
+        path: signal.json
     - name: Send message to Feishu
       run: |
         curl -X POST \
