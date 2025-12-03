@@ -40,6 +40,17 @@ jobs:
       with:
         name: signal
         path: signal.json
+    - name: Commit signal.json to repo
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+    
+        git add signal.json
+    
+        # 用 [skip ci] 防止触发 workflow
+        git commit -m "Update signal.json [skip ci]" || echo "No changes to commit"
+    
+        git push      
     - name: Send message to Feishu
       run: |
         curl -X POST \
